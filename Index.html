@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Class Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --theme-bg: #f1f5f9; --theme-card-bg: #ffffff; --theme-text-primary: #1e293b;
+            --theme-text-secondary: #64748b; --theme-border: #e2e8f0; --theme-accent: #4f46e5;
+            --theme-accent-light: #e0e7ff; --theme-header-bg: rgba(255, 255, 255, 0.8);
+        }
+        html[data-theme='dark'] {
+            --theme-bg: #0f172a; --theme-card-bg: #1e293b; --theme-text-primary: #f1f5f9;
+            --theme-text-secondary: #94a3b8; --theme-border: #334155; --theme-header-bg: rgba(30, 41, 59, 0.8);
+        }
+        html[data-theme='sunset'] {
+            --theme-bg: #fef3c7; --theme-card-bg: #fffbeb; --theme-text-primary: #78350f;
+            --theme-text-secondary: #92400e; --theme-border: #fde68a; --theme-accent: #f97316;
+            --theme-accent-light: #ffedd5; --theme-header-bg: rgba(255, 251, 235, 0.8);
+        }
+        html[data-theme='ocean'] {
+            --theme-bg: #ecfeff; --theme-card-bg: #f0f9ff; --theme-text-primary: #083344;
+            --theme-text-secondary: #0e7490; --theme-border: #bae6fd; --theme-accent: #06b6d4;
+            --theme-accent-light: #cffafe; --theme-header-bg: rgba(240, 249, 255, 0.8);
+        }
+        html[data-theme='mint'] {
+            --theme-bg: #f0fdf4; --theme-card-bg: #f6fef9; --theme-text-primary: #14532d;
+            --theme-text-secondary: #166534; --theme-border: #bbf7d0; --theme-accent: #22c55e;
+            --theme-accent-light: #dcfce7; --theme-header-bg: rgba(240, 253, 244, 0.8);
+        }
+        html[data-theme='sakura'] {
+            --theme-bg: #fef2f2; --theme-card-bg: #fff1f2; --theme-text-primary: #881337;
+            --theme-text-secondary: #9f1239; --theme-border: #fecdd3; --theme-accent: #f43f5e;
+            --theme-accent-light: #ffe4e6; --theme-header-bg: rgba(255, 241, 242, 0.8);
+        }
+        html[data-theme='cyberpunk'] {
+            --theme-bg: #020617; --theme-card-bg: #0f172a; --theme-text-primary: #f8fafc;
+            --theme-text-secondary: #94a3b8; --theme-border: #334155; --theme-accent: #38bdf8;
+            --theme-accent-light: #0ea5e920; --theme-header-bg: rgba(15, 23, 42, 0.8);
+        }
+         html[data-theme='forest'] {
+            --theme-bg: #f0fdf4; --theme-card-bg: #f6fef9; --theme-text-primary: #14532d;
+            --theme-text-secondary: #166534; --theme-border: #bbf7d0; --theme-accent: #22c55e;
+            --theme-accent-light: #dcfce7; --theme-header-bg: rgba(240, 253, 244, 0.8);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--theme-bg);
+            color: var(--theme-text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .schedule-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .schedule-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
+        .live-indicator { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } }
+        
+        .modal { display: none; } .modal.is-open { display: flex; }
+        .modal-content { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .glassmorphism { background: var(--theme-header-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--theme-border); }
+        
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--theme-accent); }
+        .action-btn { position: relative; padding: 6px; border-radius: 99px; transition: background-color 0.2s ease; }
+        .action-btn:hover { background-color: var(--theme-border); }
+
+        .toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            padding: 10px 20px; border-radius: 99px; color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: bottom 0.5s ease-in-out; z-index: 100;
+        }
+        .toast.show { bottom: 30px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app-container" class="min-h-screen p-4 sm:p-6 lg:p-8">
+        <header class="sticky top-0 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 z-30 glassmorphism">
+            <div class="max-w-screen-xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                 <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold" style="color: var(--theme-accent);">AI Class 2 Dashboard</h1>
+                    <p class="text-sm" style="color: var(--theme-text-secondary);">Class 2 of AI, Grade 2024 (Nanjing Campus)</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                     <div class="relative"><input type="text" id="search-bar" placeholder="Search classes..." class="w-32 sm:w-48 pl-8 pr-2 py-1.5 rounded-full text-sm border-2" style="background-color: var(--theme-bg); border-color: var(--theme-border); color: var(--theme-text-primary);"><svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--theme-text-secondary);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
+                    <div id="live-clock" class="hidden sm:block text-lg font-semibold px-4 py-1.5 rounded-lg w-28 text-center" style="background-color: var(--theme-card-bg); color: var(--theme-text-primary);"></div>
+                    <button id="settings-btn" class="p-2 rounded-full" style="background-color: var(--theme-card-bg);"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="p-6 rounded-2xl shadow-lg md:col-span-2" style="background-color: var(--theme-card-bg);"><h2 class="font-bold text-lg mb-3" style="color: var(--theme-text-primary);">Today's Agenda</h2><div id="countdown-wrapper" class="mb-4"></div><div id="agenda-panel" class="space-y-2 text-sm"></div></div>
+            <div class="flex flex-col gap-6">
+                <div class="p-6 rounded-2xl shadow-lg" style="background-color: var(--theme-card-bg);"><label for="week-selector" class="font-bold text-lg mb-2 block" style="color: var(--theme-text-primary);">Academic Week: <span id="week-label" style="color: var(--theme-accent);">1</span></label><input id="week-selector" type="range" min="1" max="17" value="1" class="w-full h-2 rounded-lg appearance-none cursor-pointer" style="background-color: var(--theme-border);"><div class="flex justify-between items-center mt-2"><p id="motivational-quote" class="text-xs italic w-2/3" style="color: var(--theme-text-secondary);"></p><button id="export-calendar-btn" class="text-xs font-semibold px-3 py-1 rounded-full" style="background-color: var(--theme-accent-light); color: var(--theme-accent);">Export Week</button></div></div>
+                <div class="p-6 rounded-2xl shadow-lg" style="background-color: var(--theme-card-bg);"><h2 class="font-bold text-lg mb-2" style="color: var(--theme-text-primary);">Weekly Goals</h2><div id="goals-list" class="space-y-2 max-h-40 overflow-y-auto"></div><input type="text" id="new-goal-input" placeholder="Add a new goal and press Enter..." class="mt-2 w-full text-sm p-2 rounded-md border-2" style="background-color: var(--theme-bg); border-color: var(--theme-border);"></div>
+            </div>
+        </div>
+
+        <main id="schedule-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4"></main>
+    </div>
+    
+    <div id="modal-container"></div>
+    <div id="toast-container"></div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const scheduleData = {
+            Monday: [
+                { id: "MON1", name: "Signals and Systems", name_cn: "信号与系统", instructor: "刘婷", time: "08:00-09:40", location: "揽江楼N308", weeks: { type: 'all', range: [1, 16] } },
+                { id: "MON2", name: "Optimization Methods", name_cn: "最优化", instructor: "汤龙", time: "10:10-11:50", location: "东阶", weeks: { type: 'all', range: [2, 17] } },
+                { id: "MON3", name: "Electronic Technology Fundamentals", name_cn: "电子技术基础", instructor: "高旭东", time: "13:45-15:25", location: "雷丁楼", weeks: { type: 'all', range: [2, 17] } },
+                { id: "MON4", name: "Physics (1)", name_cn: "大学物理 (1)", instructor: "黃志勤", time: "15:55-17:35", location: "雷丁楼S119", weeks: { type: 'all', range: [2, 17] } },
+                { id: "MON5", name: "Linear Algebra", name_cn: "线性代数", instructor: "Rasool Hafezi Najafabadi", time: "18:45-20:25", location: "揽江楼C301", weeks: { type: 'all', range: [2, 17] } },
+            ],
+            Tuesday: [
+                { id: "TUE1", name: "HSK 4 Tutorial (1)", name_cn: "汉语水平考试四级培训 (1)", instructor: "高慧", time: "10:10-11:50", location: "雷丁楼S119", weeks: { type: 'all', range: [2, 17] } },
+                { id: "TUE2", name: "Introduction to Artificial Intelligence", name_cn: "人工智能概论", instructor: "刘耀华", time: "13:45-15:25", location: "揽江楼", weeks: { type: 'even', range: [2, 16] } },
+                { id: "TUE3", name: "Physical Education 3", name_cn: "体育(3)", instructor: "陈东", time: "15:55-17:35", location: "体育馆北门厅", weeks: { type: 'all', range: [2, 17] } },
+            ],
+            Wednesday: [
+                { id: "WED1", name: "Optimization Methods", name_cn: "最优化", instructor: "汤龙", time: "10:10-11:50", location: "文德S101", weeks: { type: 'odd', range: [3, 17] } },
+                { id: "WED2", name: "Linear Algebra", name_cn: "线性代数", instructor: "Rasool Hafezi Najafabadi", time: "15:55-17:35", location: "揽江楼C301", weeks: { type: 'even', range: [2, 16] } },
+                { id: "WED3", name: "Data Structures & Algorithms", name_cn: "数据结构与算法", instructor: "林鑫", time: "18:45-20:25", location: "揽江楼S206", weeks: { type: 'all', range: [2, 17] } },
+            ],
+            Thursday: [
+                { id: "THU1", name: "Electronic Technology Fundamentals", name_cn: "电子技术基础", instructor: "高旭东", time: "08:00-09:40", location: "揽江楼C302", weeks: { type: 'all', range: [2, 17] } },
+                { id: "THU2", name: "Data Structures & Algorithms", name_cn: "数据结构与算法", instructor: "林鑫", time: "13:45-15:25", location: "雷丁楼S119", weeks: { type: 'all', range: [2, 17] } },
+                { id: "THU3", name: "Physics (1)", name_cn: "大学物理1 (1)", instructor: "黄志勤", time: "15:55-17:35", location: "揽江楼S207", weeks: { type: 'all', range: [2, 17] } },
+            ],
+            Friday: [
+                { id: "FRI1", name: "China Overview II - Chinese Culture", name_cn: "中国概况II-中华文化概览(1)", instructor: "孙伟,张洋溢,汪洋,程方", time: "08:00-09:40", location: "滨江BS312", weeks: { type: 'all', range: [2, 17] } },
+                { id: "FRI2", name: "Introduction to Artificial Intelligence", name_cn: "人工智能概论", instructor: "刘耀华", time: "13:45-15:25", location: "雷丁楼S114", weeks: { type: 'all', range: [2, 17] } },
+                { id: "FRI3", name: "Signals and Systems", name_cn: "信号与系统", instructor: "刘婷", time: "15:55-17:35", location: "揽江楼N606", weeks: { type: 'all', range: [1, 16] } },
+            ]
+        };
+        let classNotes = {}, classAssignments = {}, weeklyGoals = [];
+        let currentWeek = 1, viewedWeek = 1, currentLanguage = 'en';
+        const SEMESTER_START_DATE = new Date('2025-09-01T00:00:00');
+        const HOLIDAY_START_DATES = [ new Date('2025-10-06T00:00:00') ]; 
+        const QUOTES = [ 
+            "The secret of getting ahead is getting started.", 
+            "Don't watch the clock; do what it does. Keep going.", 
+            "The expert in anything was once a beginner.", 
+            "Study hard, for the well is deep, and our brains are shallow.", 
+            "Success is the sum of small efforts, repeated day in and day out.",
+            "The beautiful thing about learning is that no one can take it away from you.",
+            "The future belongs to those who believe in the beauty of their dreams.",
+            "It does not matter how slowly you go as long as you do not stop.",
+            "Believe you can and you're halfway there.",
+            "You are the only one who can limit your greatness.",
+            "The way to get started is to quit talking and begin doing.",
+            "I find that the harder I work, the more luck I seem to have.",
+            "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+            "Strive for progress, not perfection.",
+            "The only place where success comes before work is in the dictionary."
+         ];
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-class-dashboard';
+        let db, auth, userId;
+        let countdownInterval;
+        let goalsUnsubscribe = null;
+
+        async function setupFirebase() {
+            try {
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) { userId = user.uid; attachFirestoreListeners(); } 
+                    else { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); }
+                });
+            } catch (error) { console.error("Firebase initialization failed:", error); }
+        }
+
+        function attachFirestoreListeners() {
+            if (!userId) return;
+            const collections = {
+                classNotes: collection(db, `artifacts/${appId}/users/${userId}/classNotes`),
+                classAssignments: collection(db, `artifacts/${appId}/users/${userId}/classAssignments`),
+            };
+            onSnapshot(collections.classNotes, s => { classNotes = {}; s.forEach(d => classNotes[d.id] = d.data()); renderSchedule(); });
+            onSnapshot(collections.classAssignments, s => { classAssignments = {}; s.forEach(d => classAssignments[d.id] = { id: d.id, ...d.data() }); renderSchedule(); updateAgendaAndCountdown(); });
+            attachGoalsListener();
+        }
+
+        function attachGoalsListener() {
+            if (goalsUnsubscribe) goalsUnsubscribe();
+            const goalsDocRef = doc(db, `artifacts/${appId}/users/${userId}/weeklyGoals`, `week-${currentWeek}`);
+            goalsUnsubscribe = onSnapshot(goalsDocRef, (doc) => {
+                weeklyGoals = doc.exists() ? doc.data().goals : [];
+                renderGoals();
+            });
+        }
+
+        const scheduleGrid = document.getElementById('schedule-grid');
+        function renderSchedule() {
+            if (!scheduleGrid) return;
+            scheduleGrid.innerHTML = '';
+            const searchQuery = document.getElementById('search-bar').value.toLowerCase();
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].forEach(day => {
+                const dayColumn = document.createElement('div');
+                dayColumn.className = 'flex flex-col gap-4';
+                dayColumn.innerHTML = `<h3 class="text-xl font-bold text-center sticky top-20 py-2 rounded-lg" style="color: var(--theme-text-primary);">${day}</h3>`;
+                const allDayItems = getAllDayItems(day, viewedWeek)
+                    .filter(item => {
+                        const title = item.name || ''; const instructor = item.instructor || '';
+                        return title.toLowerCase().includes(searchQuery) || instructor.toLowerCase().includes(searchQuery);
+                    });
+                if (allDayItems.length > 0) allDayItems.forEach(item => dayColumn.appendChild(createCard(item)));
+                else dayColumn.innerHTML += `<div class="text-center p-4 text-sm" style="color: var(--theme-text-secondary);">No classes found.</div>`;
+                scheduleGrid.appendChild(dayColumn);
+            });
+        }
+        
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = `schedule-card p-4 rounded-xl shadow-lg`;
+            card.style.backgroundColor = 'var(--theme-card-bg)';
+            card.style.borderLeft = `4px solid var(--theme-accent)`;
+            const title = currentLanguage === 'cn' ? item.name_cn : (currentLanguage === 'bilingual' ? `${item.name_cn} / ${item.name}` : item.name);
+            const hasNote = classNotes[item.id] && classNotes[item.id].content;
+            const assignments = Object.values(classAssignments).filter(a => a.courseId === item.id);
+            const upcomingAssignments = assignments.filter(a => !a.completed).length;
+            
+            const totalWeeks = item.weeks.range[1] - item.weeks.range[0] + 1;
+            const completedWeeks = Math.max(0, currentWeek - item.weeks.range[0] + 1);
+            const progressPercent = Math.min(100, (completedWeeks / totalWeeks) * 100);
+            const progressHtml = `<div class="mt-3">
+                <div class="flex justify-between text-xs mb-1" style="color: var(--theme-text-secondary);"><span>Progress</span><span>Week ${Math.min(completedWeeks, totalWeeks)} of ${totalWeeks}</span></div>
+                <div class="w-full h-1.5 rounded-full" style="background-color: var(--theme-border);"><div class="h-1.5 rounded-full" style="background-color: var(--theme-accent); width: ${progressPercent}%"></div></div></div>`;
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start"><div><p class="font-bold">${title}</p><p class="text-sm font-medium" style="color: var(--theme-accent);">${item.time}</p></div>
+                <div class="text-xs font-semibold px-2 py-1 rounded-full" style="background-color: var(--theme-accent-light); color: var(--theme-accent);">${item.weeks.type}</div></div>
+                <div class="mt-2 space-y-1 text-sm" style="color: var(--theme-text-secondary);">
+                <p class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${item.instructor}</p>
+                <a href="https://www.amap.com/search?query=${encodeURIComponent(item.location + ' 南京信息工程大学')}" target="_blank" class="flex items-center gap-1.5 hover:underline" style="color: var(--theme-accent);"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${item.location}</a></div>
+                ${progressHtml}
+                <div class="flex justify-end items-center mt-3 -mb-2 gap-2">
+                <button class="action-btn assignments-btn" data-id="${item.id}" data-title="${item.name}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    ${upcomingAssignments > 0 ? `<span class="absolute -top-1 -right-1 block h-4 w-4 text-xs flex items-center justify-center rounded-full ring-2" style="background-color: #ef4444; color: white; border-color: var(--theme-card-bg);">${upcomingAssignments}</span>` : ''}</button>
+                <button class="action-btn notes-btn" data-id="${item.id}" data-title="${title}" data-subtitle="${item.time} - ${item.instructor}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.6a2 2 0 0 0-0.6-1.4L14.8 2.8A2 2 0 0 0 13.4 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    ${hasNote ? `<span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2" style="background-color: #22c55e; border-color: var(--theme-card-bg);"></span>` : ''}</button></div>`;
+            return card;
+        }
+
+        function renderGoals() {
+            const goalsList = document.getElementById('goals-list'); if (!goalsList) return;
+            goalsList.innerHTML = weeklyGoals.length === 0 ? `<p class="text-sm" style="color: var(--theme-text-secondary);">No goals set for this week.</p>`
+                : weeklyGoals.map((goal, index) => `<div class="flex items-center justify-between text-sm p-2 rounded-md hover:bg-[var(--theme-border)]" style="background-color: ${goal.completed ? 'transparent' : 'var(--theme-bg)'};">
+                    <label class="flex-grow flex items-center gap-2 ${goal.completed ? 'line-through' : ''}" style="color: ${goal.completed ? 'var(--theme-text-secondary)' : 'var(--theme-text-primary)'};"><input type="checkbox" class="goal-checkbox" data-index="${index}" ${goal.completed ? 'checked' : ''}>${goal.text}</label>
+                    <button class="delete-goal-btn p-1 opacity-50 hover:opacity-100" data-index="${index}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>`).join('');
+        }
+        
+        function updateCurrentWeek() {
+            const today = new Date();
+            let weeksPassed = Math.floor((today - SEMESTER_START_DATE) / (1000 * 60 * 60 * 24 * 7));
+            const holidaysPassed = HOLIDAY_START_DATES.filter(h => today > new Date(h.getTime() + 7 * 24 * 60 * 60 * 1000)).length;
+            weeksPassed -= holidaysPassed;
+            const weekNumber = Math.max(1, weeksPassed + 1);
+            if (currentWeek !== weekNumber) {
+                currentWeek = Math.min(17, weekNumber);
+                if (userId) attachGoalsListener();
+            }
+            viewedWeek = currentWeek;
+            document.getElementById('week-selector').value = viewedWeek;
+            document.getElementById('week-label').textContent = viewedWeek;
+        }
+
+        function isClassScheduled(classItem, week) {
+            const { type, range } = classItem.weeks;
+            if (week < range[0] || week > range[1]) return false;
+            if (type === 'odd' && week % 2 === 0) return false;
+            if (type === 'even' && week % 2 !== 0) return false;
+            return true;
+        }
+        
+        function updateClock() { if (document.getElementById('live-clock')) document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+        
+        function updateAgendaAndCountdown() {
+            const now = new Date(); const today = now.toLocaleDateString('en-US', { weekday: 'long' });
+            const agendaPanel = document.getElementById('agenda-panel'); const countdownWrapper = document.getElementById('countdown-wrapper');
+            if (!agendaPanel || !countdownWrapper) return;
+            
+            agendaPanel.innerHTML = ''; countdownWrapper.innerHTML = '';
+            
+            const allDayItems = getAllDayItems(today, currentWeek);
+            const live = allDayItems.find(item => now >= item.startTime && now <= item.endTime);
+            const past = allDayItems.filter(item => now > item.endTime).pop();
+            const upcoming = allDayItems.filter(item => now < item.startTime);
+
+            if(upcoming.length > 0) {
+                const nextClass = upcoming[0]; const diff = nextClass.startTime - now;
+                const hours = Math.floor(diff / 3600000); const minutes = Math.floor((diff % 3600000) / 60000); const seconds = Math.floor((diff % 60000) / 1000);
+                const title = currentLanguage === 'en' ? nextClass.name : nextClass.name_cn;
+                countdownWrapper.innerHTML = `<div class="p-4 rounded-lg" style="background-color: var(--theme-accent-light);"><p class="text-sm font-medium" style="color: var(--theme-accent);">Next Up: ${title}</p><p class="text-2xl font-bold font-mono" style="color: var(--theme-accent);">${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}</p></div>`;
+            } else { countdownWrapper.innerHTML = `<p class="text-sm p-4 rounded-lg" style="background-color: var(--theme-accent-light); color: var(--theme-accent);">No more classes today. Great work!</p>`; }
+
+            if (!past && !live && upcoming.length === 0) { agendaPanel.innerHTML = `<p class="text-sm" style="color: var(--theme-text-secondary);">Your schedule for today is clear.</p>`; return; }
+            if (past) agendaPanel.appendChild(createAgendaItem(past, 'Past'));
+            if (live) agendaPanel.appendChild(createAgendaItem(live, 'Live'));
+            if (upcoming.length > 0) upcoming.slice(0, 2).forEach(item => agendaPanel.appendChild(createAgendaItem(item, 'Upcoming')));
+        }
+        
+        function createAgendaItem(item, status) {
+            const el = document.createElement('div');
+            const title = currentLanguage === 'cn' ? item.name_cn : (currentLanguage === 'bilingual' ? `${item.name_cn} / ${item.name}` : item.name);
+            let statusBadge = '';
+            if (status === 'Live') statusBadge = '<span class="live-indicator ml-2 text-xs font-semibold px-2 py-0.5 rounded-full" style="background-color: #fee2e2; color: #b91c1c;">LIVE</span>';
+            else if (status === 'Past') statusBadge = '<span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full" style="background-color: var(--theme-border); color: var(--theme-text-secondary);">Finished</span>';
+            el.className = `p-3 rounded-lg`;
+            if (status === 'Live') el.style.backgroundColor = 'var(--theme-accent-light)';
+            el.innerHTML = `<div class="flex justify-between items-center"><p class="font-semibold flex items-center" style="color: var(--theme-text-primary);">${title}${statusBadge}</p><p class="font-mono text-sm" style="color: var(--theme-text-secondary);">${item.time}</p></div>`;
+            return el;
+        }
+
+        function getAllDayItems(day, week) {
+            return (scheduleData[day] || []).filter(c => isClassScheduled(c, week)).map(item => {
+                const [startStr, endStr] = item.time.split('-');
+                const [sh, sm] = startStr.split(':').map(Number); const [eh, em] = endStr.split(':').map(Number);
+                const startTime = new Date(); startTime.setHours(sh, sm, 0, 0);
+                const endTime = new Date(); endTime.setHours(eh, em, 0, 0);
+                return { ...item, startTime, endTime };
+            }).sort((a, b) => a.startTime - b.startTime);
+        }
+
+        const modalContainer = document.getElementById('modal-container');
+        const ModalManager = {
+            createAllModals() { this.createSettingsModal(); this.createNotesModal(); this.createAssignmentsModal(); },
+            create(id, content, options = {}) {
+                if (document.getElementById(id)) document.getElementById(id).remove();
+                const modal = document.createElement('div'); modal.id = id;
+                modal.className = 'modal fixed inset-0 z-50 items-center justify-center p-4 bg-black/50';
+                modal.innerHTML = `<div class="modal-content w-full ${options.size || 'max-w-md'} rounded-2xl p-6 shadow-2xl" style="background-color: var(--theme-card-bg);">${content}</div>`;
+                modalContainer.appendChild(modal);
+                modal.addEventListener('click', (e) => { if (e.target.id === id || e.target.closest('.close-modal-btn')) this.close(id); });
+            },
+            open(id) { document.getElementById(id)?.classList.add('is-open'); },
+            close(id) { document.getElementById(id)?.classList.remove('is-open'); },
+            createSettingsModal() {
+                const themes = [ {id: 'light', name: '☀️ Light'}, {id: 'dark', name: '🌙 Dark'}, {id: 'sunset', name: '🌇 Sunset'}, {id: 'ocean', name: '🌊 Ocean'}, {id: 'mint', name: '🌿 Mint'}, {id: 'sakura', name: '🌸 Sakura'}, {id: 'cyberpunk', name: '👾 Cyberpunk'}, {id: 'forest', name: '🌲 Forest'} ];
+                const content = `<div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">Settings</h2><button class="close-modal-btn p-2 text-2xl">&times;</button></div><div class="mb-4"><label class="block text-sm font-medium mb-2" style="color: var(--theme-text-secondary);">Theme</label><div class="grid grid-cols-2 gap-2">${themes.map(t => `<button class="theme-btn p-2 rounded-lg text-left hover:bg-[var(--theme-border)]" data-theme="${t.id}">${t.name}</button>`).join('')}</div></div><div class="mb-4"><label for="language-toggle" class="block text-sm font-medium mb-2" style="color: var(--theme-text-secondary);">Language</label><select id="language-toggle" class="w-full p-2 rounded-lg border-2" style="background-color: var(--theme-bg); border-color: var(--theme-border);"><option value="en">English</option><option value="cn">中文</option><option value="bilingual">Bilingual</option></select></div><div class="flex justify-end"><button class="close-modal-btn px-4 py-2 rounded-lg" style="background-color: var(--theme-accent-light); color: var(--theme-accent);">Done</button></div>`;
+                this.create('settings-modal', content);
+            },
+            createNotesModal() {
+                const content = `<div class="flex justify-between items-center mb-4"><div class="flex-grow"><h2 id="notes-modal-title" class="text-xl font-bold">Notes</h2><p id="notes-modal-subtitle" class="text-sm" style="color: var(--theme-text-secondary);"></p></div><button class="close-modal-btn p-2 text-2xl">&times;</button></div><textarea id="notes-textarea" class="w-full h-48 p-2 rounded-lg border-2" style="background-color: var(--theme-bg); border-color: var(--theme-border);"></textarea><div class="flex justify-end mt-4"><button id="save-notes-btn" class="px-4 py-2 rounded-lg text-white" style="background-color: var(--theme-accent);">Save</button></div>`;
+                this.create('notes-modal', content, { size: 'max-w-lg' });
+            },
+            createAssignmentsModal() {
+                const content = `<div class="flex justify-between items-center mb-4"><h2 id="assignments-modal-title" class="text-xl font-bold">Assignments</h2><button class="close-modal-btn p-2 text-2xl">&times;</button></div><div id="assignments-list" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div><div class="space-y-2"><input type="text" id="new-assignment-input" placeholder="New assignment..." class="w-full p-2 rounded-md border-2" style="background-color: var(--theme-bg); border-color: var(--theme-border);"><input type="date" id="new-assignment-date" class="w-full p-2 rounded-md border-2" style="background-color: var(--theme-bg); border-color: var(--theme-border);"><button id="add-assignment-btn" class="w-full px-4 py-2 rounded-lg text-white" style="background-color: var(--theme-accent);">Add Assignment</button></div>`;
+                this.create('assignments-modal', content, { size: 'max-w-lg' });
+            },
+        };
+
+        function getQuoteOfTheDay() {
+            // Use the day of the year to get a consistent daily quote
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = now - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            const index = dayOfYear % QUOTES.length;
+            return QUOTES[index];
+        }
+
+        function handleCardActions(e) {
+            const notesBtn = e.target.closest('.notes-btn');
+            if (notesBtn) {
+                const { id, title, subtitle } = notesBtn.dataset;
+                document.getElementById('notes-modal-title').textContent = title;
+                document.getElementById('notes-modal-subtitle').textContent = subtitle;
+                const notesTextarea = document.getElementById('notes-textarea');
+                notesTextarea.value = classNotes[id]?.content || '';
+                document.getElementById('save-notes-btn').onclick = async () => {
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/classNotes`, id), { content: notesTextarea.value });
+                    showToast('Notes saved!'); ModalManager.close('notes-modal');
+                };
+                ModalManager.open('notes-modal');
+            }
+            const assignmentsBtn = e.target.closest('.assignments-btn');
+            if (assignmentsBtn) {
+                const { id, title } = assignmentsBtn.dataset;
+                document.getElementById('assignments-modal-title').textContent = title;
+                const list = document.getElementById('assignments-list');
+                const renderAssignments = () => {
+                    list.innerHTML = '';
+                    const courseAssignments = Object.values(classAssignments).filter(a => a.courseId === id).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+                    if(courseAssignments.length > 0) courseAssignments.forEach(a => list.innerHTML += `<div class="flex items-center justify-between text-sm p-2 rounded-md" style="background-color: var(--theme-bg);"><label class="flex items-center gap-2 ${a.completed ? 'line-through' : ''}"><input type="checkbox" class="assignment-checkbox" data-id="${a.id}" ${a.completed ? 'checked' : ''}><div><p>${a.text}</p><p class="text-xs" style="color: var(--theme-text-secondary);">${a.dueDate}</p></div></label><button class="delete-assignment-btn p-1" data-id="${a.id}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>`);
+                    else list.innerHTML = `<p class="text-sm" style="color: var(--theme-text-secondary);">No assignments added yet.</p>`;
+                };
+                renderAssignments();
+                document.getElementById('add-assignment-btn').onclick = async () => {
+                    const textInput = document.getElementById('new-assignment-input'); const dateInput = document.getElementById('new-assignment-date');
+                    if (textInput.value.trim() && dateInput.value) {
+                        const newAssignment = { courseId: id, text: textInput.value.trim(), dueDate: dateInput.value, completed: false };
+                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/classAssignments`), newAssignment);
+                        textInput.value = ''; dateInput.value = ''; showToast('Assignment added!');
+                    }
+                };
+                list.onchange = async (ev) => { if (ev.target.classList.contains('assignment-checkbox')) await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/classAssignments`, ev.target.dataset.id), { completed: ev.target.checked }); };
+                list.onclick = async (ev) => { const delBtn = ev.target.closest('.delete-assignment-btn'); if (delBtn) await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/classAssignments`, delBtn.dataset.id)); };
+                ModalManager.open('assignments-modal');
+            }
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('settings-btn').addEventListener('click', () => ModalManager.open('settings-modal'));
+            document.getElementById('search-bar').addEventListener('input', renderSchedule);
+            document.getElementById('week-selector').addEventListener('input', (e) => { viewedWeek = parseInt(e.target.value); document.getElementById('week-label').textContent = viewedWeek; renderSchedule(); });
+            
+            document.getElementById('modal-container').addEventListener('click', (e) => {
+                const themeBtn = e.target.closest('.theme-btn');
+                if (themeBtn) {
+                    const theme = themeBtn.dataset.theme;
+                    document.documentElement.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                }
+            });
+            document.getElementById('modal-container').addEventListener('change', (e) => { if (e.target.id === 'language-toggle') { currentLanguage = e.target.value; renderSchedule(); updateAgendaAndCountdown(); } });
+            
+            document.getElementById('schedule-grid').addEventListener('click', handleCardActions);
+            document.getElementById('new-goal-input').addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter' && e.target.value.trim() && userId) {
+                    const newGoal = { text: e.target.value.trim(), completed: false };
+                    const updatedGoals = [...weeklyGoals, newGoal];
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/weeklyGoals`, `week-${currentWeek}`), { goals: updatedGoals });
+                    e.target.value = ''; showToast('Goal added!');
+                }
+            });
+            document.getElementById('goals-list').addEventListener('click', async (e) => {
+                const checkbox = e.target.closest('.goal-checkbox'); const deleteBtn = e.target.closest('.delete-goal-btn');
+                if (checkbox) {
+                    const index = parseInt(checkbox.dataset.index, 10);
+                    weeklyGoals[index].completed = checkbox.checked;
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/weeklyGoals`, `week-${currentWeek}`), { goals: weeklyGoals });
+                }
+                if (deleteBtn) {
+                    const index = parseInt(deleteBtn.dataset.index, 10);
+                    weeklyGoals.splice(index, 1);
+                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/weeklyGoals`, `week-${currentWeek}`), { goals: weeklyGoals });
+                }
+            });
+            document.getElementById('export-calendar-btn').addEventListener('click', () => {
+                let icsFile = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Gemini//Class Dashboard//EN\n`;
+                const allItems = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].flatMap(day => getAllDayItems(day, viewedWeek));
+                allItems.forEach(item => {
+                    const title = item.name; const dayIndex = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].indexOf(item.day);
+                    const eventDate = new Date(SEMESTER_START_DATE);
+                    eventDate.setDate(eventDate.getDate() + (viewedWeek - 1) * 7 + dayIndex - (eventDate.getDay() - 1 + 7) % 7);
+                    const startISO = new Date(eventDate.setHours(item.startTime.getHours(), item.startTime.getMinutes())).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                    const endISO = new Date(eventDate.setHours(item.endTime.getHours(), item.endTime.getMinutes())).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                    icsFile += `BEGIN:VEVENT\nUID:${item.id}-${viewedWeek}@classdashboard\nSUMMARY:${title}\nDTSTART:${startISO}\nDTEND:${endISO}\nLOCATION:${item.location || ''}\nEND:VEVENT\n`;
+                });
+                icsFile += 'END:VCALENDAR';
+                const blob = new Blob([icsFile], { type: 'text/calendar' });
+                const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+                link.download = `week-${viewedWeek}-schedule.ics`; link.click();
+            });
+        }
+        
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toast.style.backgroundColor = 'var(--theme-accent)';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 500);
+                }, 3000);
+            }, 10);
+        }
+
+        function init() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            ModalManager.createAllModals();
+            setupEventListeners();
+            setupFirebase();
+            updateCurrentWeek();
+            renderSchedule();
+            updateClock();
+            updateAgendaAndCountdown();
+
+            if(countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => { updateClock(); updateAgendaAndCountdown(); }, 1000);
+            document.getElementById('motivational-quote').textContent = getQuoteOfTheDay();
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
